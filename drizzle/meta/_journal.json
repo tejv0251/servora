@@ -15,6 +15,13 @@
       "when": 1788620782662,
       "tag": "0001_flat_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788626845770,
+      "tag": "0002_messy_wrecking_crew",
+      "breakpoints": true
     }
   ]
 }

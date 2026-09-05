@@ -17,6 +17,7 @@ export type DashboardJob = {
   priority: Priority;
   status: JobStatus;
   invoiceId: string | null;
+  attachmentCount: number;
 };
 
 export type DashboardCustomer = {
@@ -38,6 +39,38 @@ export type DashboardInvoice = {
   status: 'draft' | 'open' | 'paid' | 'overdue' | 'void';
   issuedAt: string;
   dueAt: string;
+  paidAt: string | null;
+  paymentMethod: PaymentMethod | null;
+  paymentReference: string | null;
+};
+
+export type PaymentMethod =
+  | 'cash'
+  | 'check'
+  | 'bank_transfer'
+  | 'card'
+  | 'other';
+
+export type PaymentRecord = {
+  id: string;
+  invoiceId: string;
+  provider: 'manual' | 'stripe_test';
+  amountCents: number;
+  status: 'succeeded' | 'failed' | 'refunded';
+  method: PaymentMethod;
+  reference: string | null;
+  receivedAt: string;
+  createdAt: string;
+};
+
+export type JobAttachment = {
+  id: string;
+  jobId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+  downloadUrl: string;
 };
 
 export type DashboardQuote = {
@@ -75,6 +108,10 @@ export type DashboardData = {
   invoices: DashboardInvoice[];
   quotes: DashboardQuote[];
   activities: DashboardActivity[];
+  capabilities: {
+    attachments: boolean;
+    stripeTestMode: boolean;
+  };
 };
 
 export type TeamRole = 'owner' | 'dispatcher' | 'technician';

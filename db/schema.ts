@@ -232,6 +232,98 @@ export const invoices = sqliteTable(
   ],
 );
 
+export const payments = sqliteTable(
+  'payments',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    invoiceId: text('invoice_id')
+      .notNull()
+      .references(() => invoices.id, { onDelete: 'restrict' }),
+    provider: text('provider', { enum: ['manual', 'stripe_test'] }).notNull(),
+    providerPaymentId: text('provider_payment_id'),
+    amountCents: integer('amount_cents').notNull(),
+    status: text('status', {
+      enum: ['succeeded', 'failed', 'refunded'],
+    }).notNull(),
+    method: text('method', {
+      enum: ['cash', 'check', 'bank_transfer', 'card', 'other'],
+    }).notNull(),
+    reference: text('reference'),
+    idempotencyKey: text('idempotency_key').notNull(),
+    recordedBy: text('recorded_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    receivedAt: text('received_at').notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index('idx_payments_workspace_received').on(
+      table.workspaceId,
+      table.receivedAt,
+    ),
+    index('idx_payments_invoice').on(table.invoiceId),
+    uniqueIndex('idx_payments_workspace_idempotency').on(
+      table.workspaceId,
+      table.idempotencyKey,
+    ),
+    uniqueIndex('idx_payments_succeeded_invoice')
+      .on(table.invoiceId)
+      .where(sql`${table.status} = 'succeeded'`),
+    uniqueIndex('idx_payments_provider_payment')
+      .on(table.provider, table.providerPaymentId)
+      .where(sql`${table.providerPaymentId} IS NOT NULL`),
+  ],
+);
+
+export const paymentEvents = sqliteTable(
+  'payment_events',
+  {
+    id: text('id').primaryKey(),
+    provider: text('provider', { enum: ['stripe_test'] }).notNull(),
+    eventType: text('event_type').notNull(),
+    objectId: text('object_id').notNull(),
+    processedAt: text('processed_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index('idx_payment_events_object').on(table.objectId)],
+);
+
+export const jobAttachments = sqliteTable(
+  'job_attachments',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    jobId: text('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    objectKey: text('object_key').notNull(),
+    fileName: text('file_name').notNull(),
+    contentType: text('content_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    uploadedBy: text('uploaded_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index('idx_job_attachments_workspace_job').on(
+      table.workspaceId,
+      table.jobId,
+    ),
+    uniqueIndex('idx_job_attachments_object_key').on(table.objectKey),
+  ],
+);
+
 export const activities = sqliteTable(
   'activities',
   {

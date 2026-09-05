@@ -44,6 +44,11 @@ import {
 
 import { Button } from '@/components/ui/button';
 import {
+  InvoicePaymentDialog,
+  type PaymentDraft,
+} from '@/components/invoice-payment-dialog';
+import { JobAttachmentsDialog } from '@/components/job-attachments-dialog';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -1474,7 +1479,15 @@ type DataViewProps = {
     amountCents: number,
     dueAt: string,
   ) => Promise<unknown>;
-  onPayInvoice: (invoice: DashboardInvoice) => Promise<unknown>;
+  onRecordPayment: (
+    invoice: DashboardInvoice,
+    draft: PaymentDraft,
+  ) => Promise<unknown>;
+  onStartStripeCheckout: (
+    invoice: DashboardInvoice,
+    idempotencyKey: string,
+  ) => Promise<unknown>;
+  onAttachmentsChanged: () => Promise<void>;
 };
 function DataView({
   view,
@@ -1484,7 +1497,9 @@ function DataView({
   onAdvance,
   onAcceptQuote,
   onCreateInvoice,
-  onPayInvoice,
+  onRecordPayment,
+  onStartStripeCheckout,
+  onAttachmentsChanged,
 }: DataViewProps) {
   const normalizedQuery = query.trim().toLowerCase();
   const match = (...values: string[]) =>
@@ -1508,7 +1523,7 @@ function DataView({
       {view === 'Jobs' || view === 'Schedule' ? (
         filteredJobs.length ? (
           <div className="responsive-table">
-            <table>
+            <table className="mobile-card-table">
               <thead>
                 <tr>
                   <th>Job</th>
@@ -1525,40 +1540,49 @@ function DataView({
                   const next = getNextJobStatus(job.status);
                   return (
                     <tr key={job.id}>
-                      <td>
+                      <td data-label="Job">
                         <strong>{compactId('J', job.id)}</strong>
                         <small>{job.service}</small>
                       </td>
-                      <td>
+                      <td data-label="Customer">
                         {job.customer}
                         <small>{job.city}</small>
                       </td>
-                      <td>{job.technician}</td>
-                      <td>
+                      <td data-label="Technician">{job.technician}</td>
+                      <td data-label="Time">
                         {shortDate(job.scheduledAt)} ·{' '}
                         {shortTime(job.scheduledAt)}
                       </td>
-                      <td>{job.priority}</td>
-                      <td>
+                      <td data-label="Priority">{job.priority}</td>
+                      <td data-label="Status">
                         <span className="status-label">
                           <StatusDot status={job.status} />
                           {job.status}
                         </span>
                       </td>
-                      <td>
-                        {next ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void onAdvance(job)}
-                          >
-                            Move to {next}
-                          </Button>
-                        ) : job.status === 'Completed' && !job.invoiceId ? (
-                          <InvoiceDialog job={job} onCreate={onCreateInvoice} />
-                        ) : job.invoiceId ? (
-                          <small>Invoiced</small>
-                        ) : null}
+                      <td data-label="Action">
+                        <div className="row-actions">
+                          <JobAttachmentsDialog
+                            job={job}
+                            onChanged={onAttachmentsChanged}
+                          />
+                          {next ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void onAdvance(job)}
+                            >
+                              Move to {next}
+                            </Button>
+                          ) : job.status === 'Completed' && !job.invoiceId ? (
+                            <InvoiceDialog
+                              job={job}
+                              onCreate={onCreateInvoice}
+                            />
+                          ) : job.invoiceId ? (
+                            <small>Invoiced</small>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1608,7 +1632,7 @@ function DataView({
       ) : view === 'Invoices' ? (
         filteredInvoices.length ? (
           <div className="responsive-table">
-            <table>
+            <table className="mobile-card-table">
               <thead>
                 <tr>
                   <th>Invoice</th>
@@ -1623,28 +1647,38 @@ function DataView({
               <tbody>
                 {filteredInvoices.map((invoice) => (
                   <tr key={invoice.id}>
-                    <td>
+                    <td data-label="Invoice">
                       <strong>{compactId('INV', invoice.id)}</strong>
                     </td>
-                    <td>{invoice.customer}</td>
-                    <td>{shortDate(invoice.issuedAt)}</td>
-                    <td>{shortDate(invoice.dueAt)}</td>
-                    <td>{money(invoice.amountCents)}</td>
-                    <td>
+                    <td data-label="Customer">{invoice.customer}</td>
+                    <td data-label="Issued">{shortDate(invoice.issuedAt)}</td>
+                    <td data-label="Due">{shortDate(invoice.dueAt)}</td>
+                    <td data-label="Amount">{money(invoice.amountCents)}</td>
+                    <td data-label="Status">
                       <span className="status-label">
                         <StatusDot status={invoice.status} />
                         {invoice.status}
                       </span>
+                      {invoice.status === 'paid' && invoice.paidAt ? (
+                        <small className="payment-detail">
+                          {shortDate(invoice.paidAt)}
+                          {invoice.paymentMethod
+                            ? ` · ${invoice.paymentMethod.replace('_', ' ')}`
+                            : ''}
+                          {invoice.paymentReference
+                            ? ` · ${invoice.paymentReference}`
+                            : ''}
+                        </small>
+                      ) : null}
                     </td>
-                    <td>
+                    <td data-label="Action">
                       {['open', 'overdue'].includes(invoice.status) ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void onPayInvoice(invoice)}
-                        >
-                          Mark paid
-                        </Button>
+                        <InvoicePaymentDialog
+                          invoice={invoice}
+                          stripeTestMode={data.capabilities.stripeTestMode}
+                          onRecord={onRecordPayment}
+                          onStartStripeCheckout={onStartStripeCheckout}
+                        />
                       ) : null}
                     </td>
                   </tr>
@@ -1855,14 +1889,28 @@ export function ServoraDashboard() {
       ),
     [mutate],
   );
-  const payInvoice = useCallback(
-    (invoice: DashboardInvoice) =>
-      mutate(
-        '/api/invoices/pay',
-        { invoiceId: invoice.id },
-        `${compactId('INV', invoice.id)} marked paid.`,
-      ),
-    [mutate],
+  const recordPayment = useCallback(
+    async (invoice: DashboardInvoice, draft: PaymentDraft) => {
+      const result = await api('/api/payments/manual', {
+        method: 'POST',
+        body: JSON.stringify({ invoiceId: invoice.id, ...draft }),
+      });
+      await load();
+      announce(`${compactId('INV', invoice.id)} payment recorded.`);
+      return result;
+    },
+    [announce, load],
+  );
+  const startStripeCheckout = useCallback(
+    async (invoice: DashboardInvoice, idempotencyKey: string) => {
+      const result = await api<{ url: string }>('/api/payments/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ invoiceId: invoice.id, idempotencyKey }),
+      });
+      window.location.assign(result.url);
+      return result;
+    },
+    [],
   );
   const loadTeam = useCallback(async () => {
     setTeamLoading(true);
@@ -2080,6 +2128,52 @@ export function ServoraDashboard() {
       );
       await context.registerTool(
         {
+          name: 'read_invoice_payments',
+          title: 'Read invoice payments',
+          description:
+            'Read the payment ledger for an invoice in the authenticated Servora workspace.',
+          inputSchema: {
+            type: 'object',
+            properties: { invoiceId: { type: 'string' } },
+            required: ['invoiceId'],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: true, untrustedContentHint: false },
+          async execute(input) {
+            const invoiceId = String(
+              (input as { invoiceId: string }).invoiceId,
+            );
+            return api(
+              `/api/payments?invoiceId=${encodeURIComponent(invoiceId)}`,
+            );
+          },
+        },
+        { signal: lifecycle.signal },
+      );
+      await context.registerTool(
+        {
+          name: 'read_job_attachments',
+          title: 'Read job attachments',
+          description:
+            'Read private file metadata for a job in the authenticated Servora workspace.',
+          inputSchema: {
+            type: 'object',
+            properties: { jobId: { type: 'string' } },
+            required: ['jobId'],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: true, untrustedContentHint: false },
+          async execute(input) {
+            const jobId = String((input as { jobId: string }).jobId);
+            return api(
+              `/api/jobs/attachments?jobId=${encodeURIComponent(jobId)}`,
+            );
+          },
+        },
+        { signal: lifecycle.signal },
+      );
+      await context.registerTool(
+        {
           name: 'create_team_invitation',
           title: 'Create team invitation',
           description:
@@ -2233,7 +2327,9 @@ export function ServoraDashboard() {
               onAdvance={advanceJob}
               onAcceptQuote={acceptQuote}
               onCreateInvoice={createInvoice}
-              onPayInvoice={payInvoice}
+              onRecordPayment={recordPayment}
+              onStartStripeCheckout={startStripeCheckout}
+              onAttachmentsChanged={load}
             />
           )}
         </main>

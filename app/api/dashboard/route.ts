@@ -8,6 +8,7 @@ import type {
   DashboardQuote,
 } from '@/lib/contracts';
 import { requireContext } from '@/db/session';
+import { getStripeConfiguration } from '@/db';
 
 export async function GET(request: Request) {
   try {
@@ -28,7 +29,8 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       db
         .prepare(`SELECT j.id, j.customer_id AS customerId, c.name AS customer, j.service, j.city, j.technician,
-        j.scheduled_at AS scheduledAt, j.priority, j.status, i.id AS invoiceId
+        j.scheduled_at AS scheduledAt, j.priority, j.status, i.id AS invoiceId,
+        (SELECT COUNT(*) FROM job_attachments a WHERE a.job_id = j.id AND a.workspace_id = j.workspace_id) AS attachmentCount
         FROM jobs j
         JOIN customers c ON c.id = j.customer_id AND c.workspace_id = j.workspace_id
         LEFT JOIN invoices i ON i.job_id = j.id AND i.workspace_id = j.workspace_id
@@ -44,7 +46,11 @@ export async function GET(request: Request) {
         .all<DashboardCustomer>(),
       db
         .prepare(`SELECT i.id, c.name AS customer, i.job_id AS jobId, i.amount_cents AS amountCents,
-        i.status, i.issued_at AS issuedAt, i.due_at AS dueAt
+        i.status, i.issued_at AS issuedAt, i.due_at AS dueAt, i.paid_at AS paidAt,
+        (SELECT p.method FROM payments p WHERE p.invoice_id = i.id AND p.workspace_id = i.workspace_id
+          AND p.status = 'succeeded' ORDER BY p.received_at DESC LIMIT 1) AS paymentMethod,
+        (SELECT p.reference FROM payments p WHERE p.invoice_id = i.id AND p.workspace_id = i.workspace_id
+          AND p.status = 'succeeded' ORDER BY p.received_at DESC LIMIT 1) AS paymentReference
         FROM invoices i JOIN customers c ON c.id = i.customer_id AND c.workspace_id = i.workspace_id
         WHERE i.workspace_id = ? ORDER BY i.issued_at DESC LIMIT 100`)
         .bind(workspace.id)
@@ -115,6 +121,10 @@ export async function GET(request: Request) {
       invoices: invoiceRows.results,
       quotes: quoteRows.results,
       activities: activityRows.results,
+      capabilities: {
+        attachments: true,
+        stripeTestMode: getStripeConfiguration().testModeConfigured,
+      },
     };
     return json(payload);
   } catch (error) {

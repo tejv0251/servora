@@ -17,6 +17,7 @@ async function database() {
     for (const migration of [
       'drizzle/0000_silent_chronomancer.sql',
       'drizzle/0001_flat_gladiator.sql',
+      'drizzle/0002_messy_wrecking_crew.sql',
     ]) {
       const sql = await readFile(
         new URL(`../${migration}`, import.meta.url),

@@ -5,7 +5,10 @@ import {
   readJsonObject,
   requiredString,
 } from '@/lib/api-response';
+import { recordManualPayment } from '@/lib/payment-service';
 
+// Compatibility endpoint retained for earlier portfolio clients. New UI uses
+// /api/payments/manual so payment method and reference are captured explicitly.
 export async function POST(request: Request) {
   try {
     const { db, workspace, user } = await requireContext(request, [
@@ -14,51 +17,21 @@ export async function POST(request: Request) {
     ]);
     const body = await readJsonObject(request);
     const invoiceId = requiredString(body, 'invoiceId');
-    const invoice = await db
-      .prepare(`SELECT i.id, i.status, c.name AS customer FROM invoices i
-      JOIN customers c ON c.id = i.customer_id AND c.workspace_id = i.workspace_id
-      WHERE i.id = ? AND i.workspace_id = ? LIMIT 1`)
-      .bind(invoiceId, workspace.id)
-      .first<{ id: string; status: string; customer: string }>();
-    if (!invoice)
-      return json(
-        { error: 'Invoice not found in this workspace.' },
-        { status: 404 },
-      );
-    if (!['open', 'overdue'].includes(invoice.status))
-      return json(
-        { error: `A ${invoice.status} invoice cannot be marked paid.` },
-        { status: 409 },
-      );
-    const updated = await db
-      .prepare(
-        "UPDATE invoices SET status = 'paid', paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND workspace_id = ? AND status IN ('open', 'overdue')",
-      )
-      .bind(invoice.id, workspace.id)
-      .run();
-    if (updated.meta.changes !== 1)
-      return json(
-        {
-          error:
-            'The invoice changed before this update. Refresh and try again.',
-        },
-        { status: 409 },
-      );
-    await db
-      .prepare(
-        'INSERT INTO activities (id, workspace_id, actor_id, entity_type, entity_id, action, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      )
-      .bind(
-        crypto.randomUUID(),
-        workspace.id,
-        user.id,
-        'invoice',
-        invoice.id,
-        'invoice.paid',
-        `Invoice paid by ${invoice.customer}`,
-      )
-      .run();
-    return json({ id: invoice.id, status: 'paid' });
+    const idempotencyKey =
+      typeof body.idempotencyKey === 'string' && body.idempotencyKey.trim()
+        ? body.idempotencyKey.trim()
+        : 'legacy:' + invoiceId;
+    const result = await recordManualPayment({
+      db,
+      workspaceId: workspace.id,
+      userId: user.id,
+      invoiceId,
+      method: 'other',
+      reference: 'Legacy mark-paid action',
+      receivedAt: new Date().toISOString(),
+      idempotencyKey,
+    });
+    return json(result, { status: result.duplicate ? 200 : 201 });
   } catch (error) {
     return errorResponse(error);
   }
