@@ -1020,6 +1020,12 @@ td small { display: block; margin-top: 3px; color: #7c837f; }
 .feature-state h2 { margin-top: 16px; font-family: Georgia, serif; font-size: 28px; font-weight: 500; }
 .feature-state p { margin: 10px 0 18px; color: #69716d; line-height: 1.6; }
 
+.app-loading {
+  min-height: 100vh;
+  padding: 32px;
+  background: #f7f6f3;
+}
+
 .new-job-dialog form {
   display: grid;
   gap: 18px;
