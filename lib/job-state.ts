@@ -13,4 +13,3 @@ export function getNextJobStatus(status: JobStatus) {
 export function canTransitionJob(current: JobStatus, next: JobStatus) {
   return nextStatus[current] === next;
 }
-

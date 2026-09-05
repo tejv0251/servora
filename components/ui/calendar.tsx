@@ -206,6 +206,8 @@ function CalendarDayButton({
 
   return (
     <Button
+      type="button"
+      onClick={props.onClick}
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString(locale?.code)}

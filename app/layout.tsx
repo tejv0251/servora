@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Servora — Field Service Operations',
-  description: 'A multi-tenant service operations SaaS for quotes, jobs, technicians, invoices, and business performance.',
+  description:
+    'A multi-tenant service operations SaaS for quotes, jobs, technicians, invoices, and business performance.',
 };
 
 export default function RootLayout({

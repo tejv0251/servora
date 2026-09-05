@@ -12,6 +12,9 @@ type WebMcpTool = {
 
 interface Document {
   readonly modelContext?: {
-    registerTool(tool: WebMcpTool, options?: { signal?: AbortSignal }): void | Promise<void>;
+    registerTool(
+      tool: WebMcpTool,
+      options?: { signal?: AbortSignal },
+    ): void | Promise<void>;
   };
 }

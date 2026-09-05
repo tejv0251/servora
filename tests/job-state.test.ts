@@ -15,4 +15,3 @@ test('jobs cannot skip or reverse lifecycle states', () => {
   assert.equal(canTransitionJob('In progress', 'En route'), false);
   assert.equal(canTransitionJob('Scheduled', 'En route'), true);
 });
-

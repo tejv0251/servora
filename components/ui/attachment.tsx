@@ -150,6 +150,8 @@ function AttachmentAction({
 }: React.ComponentProps<typeof Button>) {
   return (
     <Button
+      type="button"
+      onClick={props.onClick}
       data-slot="attachment-action"
       variant={variant ?? 'ghost'}
       size={size}

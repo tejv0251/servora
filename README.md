@@ -15,10 +15,15 @@ Private live preview: <https://servora-operations-saas.tejvishwakarma.chatgpt.si
 - Navigable job, schedule, customer, quote, invoice, and technician data views
 - Durable customer, quote, job, and invoice records in Cloudflare D1
 - Authenticated user-to-workspace provisioning and server-side role checks
+- Owner-managed seven-day invitations, dispatcher read-only team access, role changes,
+  invitation revocation, and authenticated-email acceptance
+- Automated D1 isolation tests plus two-account HTTP verification for shared and
+  independent workspaces
 - Customer creation, quote creation and acceptance, job status transitions, invoice issue, and payment capture
 - Server-computed dashboard KPIs, attention queue, activity feed, and search feedback
 - Keyboard focus, semantic status labels, reduced-motion handling, and mobile navigation
-- Page tools for reading operations, creating customers/jobs, and advancing job status
+- Page tools for reading operations/team access, creating customers/jobs/invitations,
+  and advancing job status
 
 ## Stack
 
@@ -52,6 +57,6 @@ npm run build
 
 `Lead → Customer → Quote → Accepted → Job → Scheduled → Completed → Invoice → Paid`
 
-The working slice is intentionally focused. Future milestones add team invitations,
-fine-grained technician assignment, Stripe test-mode payments, file storage,
-observability, broader integration coverage, and final Upwork case-study assets.
+The working slice is intentionally focused. Future milestones add fine-grained
+technician assignment, Stripe test-mode payments, file storage, observability,
+broader integration coverage, and final Upwork case-study assets.

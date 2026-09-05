@@ -46,10 +46,14 @@ function PaginationLink({
   className,
   isActive,
   size = 'icon',
+  onClick,
   ...props
 }: PaginationLinkProps) {
   return (
     <Button
+      onClick={(event) =>
+        onClick?.(event as unknown as React.MouseEvent<HTMLAnchorElement>)
+      }
       variant={isActive ? 'outline' : 'ghost'}
       size={size}
       className={cn(className)}

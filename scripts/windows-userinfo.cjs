@@ -12,4 +12,3 @@ try {
     homedir: process.env.USERPROFILE || process.cwd(),
   });
 }
-

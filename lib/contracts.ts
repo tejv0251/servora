@@ -1,4 +1,9 @@
-export type JobStatus = 'Scheduled' | 'En route' | 'In progress' | 'Completed' | 'Cancelled';
+export type JobStatus =
+  | 'Scheduled'
+  | 'En route'
+  | 'In progress'
+  | 'Completed'
+  | 'Cancelled';
 export type Priority = 'Low' | 'Medium' | 'High';
 
 export type DashboardJob = {
@@ -45,7 +50,11 @@ export type DashboardQuote = {
   expiresAt: string;
 };
 
-export type DashboardActivity = { id: string; message: string; createdAt: string };
+export type DashboardActivity = {
+  id: string;
+  message: string;
+  createdAt: string;
+};
 
 export type DashboardData = {
   session: {
@@ -68,3 +77,30 @@ export type DashboardData = {
   activities: DashboardActivity[];
 };
 
+export type TeamRole = 'owner' | 'dispatcher' | 'technician';
+
+export type TeamMember = {
+  id: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  role: TeamRole;
+  joinedAt: string;
+};
+
+export type TeamInvitation = {
+  id: string;
+  email: string;
+  role: Exclude<TeamRole, 'owner'>;
+  status: 'pending';
+  expiresAt: string;
+  createdAt: string;
+};
+
+export type TeamData = {
+  role: TeamRole;
+  canManage: boolean;
+  memberCount: number;
+  members: TeamMember[];
+  invitations: TeamInvitation[];
+};

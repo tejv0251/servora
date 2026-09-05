@@ -6,4 +6,3 @@ export function getD1() {
   }
   return env.DB;
 }
-
