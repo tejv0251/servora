@@ -202,7 +202,7 @@ function RevenueChart() {
     <article className="panel revenue-panel">
       <div className="panel-heading"><div><h2>Revenue vs target</h2><p>This week</p></div><div className="chart-legend"><span><i className="line-key line-key--revenue" />Revenue</span><span><i className="line-key line-key--target" />Target</span></div></div>
       <div className="chart-wrap" aria-label="Weekly revenue versus target line chart">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart data={revenueData} margin={{ top: 12, right: 8, left: -20, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="#ece9e3" />
             <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fill: '#727873', fontSize: 11 }} />
