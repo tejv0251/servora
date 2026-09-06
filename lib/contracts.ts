@@ -18,6 +18,14 @@ export type DashboardJob = {
   status: JobStatus;
   invoiceId: string | null;
   attachmentCount: number;
+  assignedUserId: string | null;
+  assignedTechnician: string | null;
+};
+
+export type TechnicianOption = {
+  userId: string;
+  displayName: string;
+  email: string;
 };
 
 export type DashboardCustomer = {
@@ -108,10 +116,40 @@ export type DashboardData = {
   invoices: DashboardInvoice[];
   quotes: DashboardQuote[];
   activities: DashboardActivity[];
+  technicianOptions: TechnicianOption[];
   capabilities: {
     attachments: boolean;
     stripeTestMode: boolean;
   };
+};
+
+export type SessionData = DashboardData['session'];
+
+export type TechnicianNote = {
+  id: string;
+  jobId: string;
+  author: string;
+  body: string;
+  createdAt: string;
+};
+
+export type TechnicianJob = {
+  id: string;
+  customer: string;
+  contactName: string;
+  phone: string;
+  service: string;
+  city: string;
+  scheduledAt: string;
+  priority: Priority;
+  status: JobStatus;
+  attachmentCount: number;
+  notes: TechnicianNote[];
+};
+
+export type TechnicianDashboardData = {
+  session: SessionData;
+  jobs: TechnicianJob[];
 };
 
 export type TeamRole = 'owner' | 'dispatcher' | 'technician';

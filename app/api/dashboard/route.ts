@@ -6,6 +6,7 @@ import type {
   DashboardInvoice,
   DashboardJob,
   DashboardQuote,
+  TechnicianOption,
 } from '@/lib/contracts';
 import { requireContext } from '@/db/session';
 import { getStripeConfiguration } from '@/db';
@@ -26,14 +27,18 @@ export async function GET(request: Request) {
       jobsToday,
       inProgress,
       quoteTotals,
+      technicianRows,
     ] = await Promise.all([
       db
         .prepare(`SELECT j.id, j.customer_id AS customerId, c.name AS customer, j.service, j.city, j.technician,
         j.scheduled_at AS scheduledAt, j.priority, j.status, i.id AS invoiceId,
+        ja.technician_user_id AS assignedUserId, au.display_name AS assignedTechnician,
         (SELECT COUNT(*) FROM job_attachments a WHERE a.job_id = j.id AND a.workspace_id = j.workspace_id) AS attachmentCount
         FROM jobs j
         JOIN customers c ON c.id = j.customer_id AND c.workspace_id = j.workspace_id
         LEFT JOIN invoices i ON i.job_id = j.id AND i.workspace_id = j.workspace_id
+        LEFT JOIN job_assignments ja ON ja.job_id = j.id AND ja.workspace_id = j.workspace_id
+        LEFT JOIN users au ON au.id = ja.technician_user_id
         WHERE j.workspace_id = ? ORDER BY j.scheduled_at DESC, j.created_at DESC LIMIT 100`)
         .bind(workspace.id)
         .all<DashboardJob>(),
@@ -97,6 +102,13 @@ export async function GET(request: Request) {
         )
         .bind(workspace.id)
         .first<{ total: number; accepted: number }>(),
+      db
+        .prepare(`SELECT m.user_id AS userId, u.display_name AS displayName, u.email
+          FROM memberships m JOIN users u ON u.id = m.user_id
+          WHERE m.workspace_id = ? AND m.role = 'technician'
+          ORDER BY u.display_name LIMIT 50`)
+        .bind(workspace.id)
+        .all<TechnicianOption>(),
     ]);
 
     const totalQuotes = quoteTotals?.total ?? 0;
@@ -121,6 +133,7 @@ export async function GET(request: Request) {
       invoices: invoiceRows.results,
       quotes: quoteRows.results,
       activities: activityRows.results,
+      technicianOptions: technicianRows.results,
       capabilities: {
         attachments: true,
         stripeTestMode: getStripeConfiguration().testModeConfigured,

@@ -1,5 +1,5 @@
-import { ServoraDashboard } from '@/components/servora-dashboard';
+import { ServoraApp } from '@/components/servora-app';
 
 export default function Home() {
-  return <ServoraDashboard />;
+  return <ServoraApp />;
 }

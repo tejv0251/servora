@@ -48,6 +48,7 @@ import {
   type PaymentDraft,
 } from '@/components/invoice-payment-dialog';
 import { JobAttachmentsDialog } from '@/components/job-attachments-dialog';
+import { JobAssignmentDialog } from '@/components/job-assignment-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1488,6 +1489,7 @@ type DataViewProps = {
     idempotencyKey: string,
   ) => Promise<unknown>;
   onAttachmentsChanged: () => Promise<void>;
+  onAssign: (jobId: string, technicianUserId: string) => Promise<unknown>;
 };
 function DataView({
   view,
@@ -1500,6 +1502,7 @@ function DataView({
   onRecordPayment,
   onStartStripeCheckout,
   onAttachmentsChanged,
+  onAssign,
 }: DataViewProps) {
   const normalizedQuery = query.trim().toLowerCase();
   const match = (...values: string[]) =>
@@ -1548,7 +1551,14 @@ function DataView({
                         {job.customer}
                         <small>{job.city}</small>
                       </td>
-                      <td data-label="Technician">{job.technician}</td>
+                      <td data-label="Technician">
+                        {job.assignedTechnician ?? job.technician}
+                        <small>
+                          {job.assignedUserId
+                            ? 'Field app assigned'
+                            : 'Roster only'}
+                        </small>
+                      </td>
                       <td data-label="Time">
                         {shortDate(job.scheduledAt)} ·{' '}
                         {shortTime(job.scheduledAt)}
@@ -1562,6 +1572,11 @@ function DataView({
                       </td>
                       <td data-label="Action">
                         <div className="row-actions">
+                          <JobAssignmentDialog
+                            job={job}
+                            technicians={data.technicianOptions}
+                            onAssign={onAssign}
+                          />
                           <JobAttachmentsDialog
                             job={job}
                             onChanged={onAttachmentsChanged}
@@ -1865,6 +1880,15 @@ export function ServoraDashboard() {
           `${compactId('J', job.id)} moved to ${status}.`,
         );
     },
+    [mutate],
+  );
+  const assignJob = useCallback(
+    (jobId: string, technicianUserId: string) =>
+      mutate(
+        '/api/jobs/assignment',
+        { jobId, technicianUserId },
+        'Field technician assigned.',
+      ),
     [mutate],
   );
   const acceptQuote = useCallback(
@@ -2330,6 +2354,7 @@ export function ServoraDashboard() {
               onRecordPayment={recordPayment}
               onStartStripeCheckout={startStripeCheckout}
               onAttachmentsChanged={load}
+              onAssign={assignJob}
             />
           )}
         </main>

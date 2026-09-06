@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "lint": "oxlint app components/servora-dashboard.tsx lib db",
+    "lint": "oxlint app components/servora-dashboard.tsx components/servora-app.tsx components/technician-mobile.tsx components/job-assignment-dialog.tsx components/job-attachments-dialog.tsx lib db",
     "test": "node --require ./scripts/windows-userinfo.cjs --import tsx --test tests/*.test.ts",
     "format": "oxfmt",
     "db:generate": "node scripts/drizzle-kit.cjs generate"

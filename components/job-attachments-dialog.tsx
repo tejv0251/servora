@@ -61,6 +61,7 @@ function fileSize(bytes: number) {
 function uploadFile(
   jobId: string,
   file: File,
+  idempotencyKey: string | null,
   onProgress: (progress: number) => void,
   onReady: (xhr: XMLHttpRequest) => void,
 ) {
@@ -92,6 +93,7 @@ function uploadFile(
     const form = new FormData();
     form.append('jobId', jobId);
     form.append('file', file);
+    if (idempotencyKey) form.append('idempotencyKey', idempotencyKey);
     xhr.open('POST', '/api/jobs/attachments');
     xhr.send(form);
   });
@@ -100,9 +102,11 @@ function uploadFile(
 export function JobAttachmentsDialog({
   job,
   onChanged,
+  technicianMode = false,
 }: {
   job: DashboardJob;
   onChanged: () => Promise<void>;
+  technicianMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -147,7 +151,7 @@ export function JobAttachmentsDialog({
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    void loadAttachments(controller.signal);
+    queueMicrotask(() => void loadAttachments(controller.signal));
     return () => controller.abort();
   }, [loadAttachments, open]);
 
@@ -204,6 +208,7 @@ export function JobAttachmentsDialog({
         const uploaded = await uploadFile(
           job.id,
           item.file,
+          technicianMode ? item.id : null,
           (progress) =>
             setQueue((current) =>
               current.map((candidate) =>
@@ -290,6 +295,7 @@ export function JobAttachmentsDialog({
             className="sr-only"
             type="file"
             accept={ATTACHMENT_ACCEPT}
+            capture={technicianMode ? 'environment' : undefined}
             multiple
             aria-label="Choose work-order files"
             onChange={(event: ChangeEvent<HTMLInputElement>) => {
@@ -302,7 +308,7 @@ export function JobAttachmentsDialog({
             variant="outline"
             onClick={() => inputRef.current?.click()}
           >
-            Browse files
+            {technicianMode ? 'Take or choose photo' : 'Browse files'}
           </Button>
         </div>
 
@@ -408,9 +414,7 @@ export function JobAttachmentsDialog({
             <span>{attachments.length}</span>
           </div>
           {loading ? (
-            <div className="attachment-loading" role="status">
-              Loading files…
-            </div>
+            <output className="attachment-loading">Loading files…</output>
           ) : attachments.length ? (
             <div className="attachment-list">
               {attachments.map((attachment) => (

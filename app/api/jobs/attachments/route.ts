@@ -7,32 +7,19 @@ import {
   validateAttachment,
 } from '@/lib/attachment-policy';
 import type { JobAttachment } from '@/lib/contracts';
-
-async function requireWorkspaceJob(
-  db: D1Database,
-  workspaceId: string,
-  jobId: string,
-) {
-  const job = await db
-    .prepare(
-      'SELECT id, service FROM jobs WHERE id = ? AND workspace_id = ? LIMIT 1',
-    )
-    .bind(jobId, workspaceId)
-    .first<{ id: string; service: string }>();
-  if (!job)
-    throw new Response('Job not found in this workspace.', { status: 404 });
-  return job;
-}
+import {
+  existingTechnicianOperation,
+  requireAccessibleJob,
+  requireIdempotencyKey,
+} from '@/lib/job-access';
 
 export async function GET(request: Request) {
   try {
-    const { db, workspace } = await requireContext(request, [
-      'owner',
-      'dispatcher',
-    ]);
+    const context = await requireContext(request);
+    const { db, workspace } = context;
     const jobId = new URL(request.url).searchParams.get('jobId')?.trim();
     if (!jobId) return json({ error: 'jobId is required.' }, { status: 400 });
-    await requireWorkspaceJob(db, workspace.id, jobId);
+    await requireAccessibleJob(context, jobId);
     const rows = await db
       .prepare(`SELECT id, job_id AS jobId, file_name AS fileName, content_type AS contentType,
         size_bytes AS sizeBytes, created_at AS createdAt
@@ -53,10 +40,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { db, workspace, user } = await requireContext(request, [
-      'owner',
-      'dispatcher',
-    ]);
+    const context = await requireContext(request);
+    const { db, workspace, user } = context;
     const form = await request.formData();
     const jobIdValue = form.get('jobId');
     const fileValue = form.get('file');
@@ -72,8 +57,22 @@ export async function POST(request: Request) {
         { status: fileValue.size > 8 * 1024 * 1024 ? 413 : 400 },
       );
     }
-    const job = await requireWorkspaceJob(db, workspace.id, jobId);
-    const id = crypto.randomUUID();
+    const job = await requireAccessibleJob(context, jobId);
+    const idempotencyValue = form.get('idempotencyKey');
+    const idempotencyKey =
+      context.role === 'technician'
+        ? requireIdempotencyKey(idempotencyValue)
+        : typeof idempotencyValue === 'string' && idempotencyValue
+          ? requireIdempotencyKey(idempotencyValue)
+          : null;
+    if (idempotencyKey) {
+      const existing = await existingTechnicianOperation(
+        context,
+        idempotencyKey,
+      );
+      if (existing) return json(existing);
+    }
+    const id = idempotencyKey ?? crypto.randomUUID();
     const createdAt = new Date().toISOString();
     const fileName = safeAttachmentName(fileValue.name);
     const objectKey = attachmentObjectKey(workspace.id, job.id, id, fileName);
@@ -87,7 +86,16 @@ export async function POST(request: Request) {
       },
     });
     try {
-      await db.batch([
+      const result: JobAttachment = {
+        id,
+        jobId: job.id,
+        fileName,
+        contentType: fileValue.type,
+        sizeBytes: fileValue.size,
+        createdAt,
+        downloadUrl: `/api/jobs/attachments/download?id=${encodeURIComponent(id)}`,
+      };
+      const statements = [
         db
           .prepare(`INSERT INTO job_attachments
             (id, workspace_id, job_id, object_key, file_name, content_type, size_bytes, uploaded_by, created_at)
@@ -114,23 +122,36 @@ export async function POST(request: Request) {
             job.id,
             `${fileName} added to ${job.service}`,
           ),
-      ]);
+      ];
+      if (context.role === 'technician' && idempotencyKey) {
+        statements.push(
+          db
+            .prepare(`INSERT INTO technician_operations
+              (id, workspace_id, user_id, job_id, idempotency_key, kind, result_json)
+              VALUES (?, ?, ?, ?, ?, 'attachment', ?)`)
+            .bind(
+              crypto.randomUUID(),
+              workspace.id,
+              user.id,
+              job.id,
+              idempotencyKey,
+              JSON.stringify(result),
+            ),
+        );
+      }
+      await db.batch(statements);
+      return json(result, { status: 201 });
     } catch (error) {
+      if (idempotencyKey) {
+        const replay = await existingTechnicianOperation(
+          context,
+          idempotencyKey,
+        );
+        if (replay) return json(replay);
+      }
       await bucket.delete(objectKey);
       throw error;
     }
-    return json(
-      {
-        id,
-        jobId: job.id,
-        fileName,
-        contentType: fileValue.type,
-        sizeBytes: fileValue.size,
-        createdAt,
-        downloadUrl: `/api/jobs/attachments/download?id=${encodeURIComponent(id)}`,
-      },
-      { status: 201 },
-    );
   } catch (error) {
     return errorResponse(error);
   }

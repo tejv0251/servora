@@ -2,25 +2,30 @@ import { getAttachmentBucket } from '@/db';
 import { requireContext } from '@/db/session';
 import { contentDisposition } from '@/lib/attachment-policy';
 import { errorResponse, json } from '@/lib/api-response';
+import { requireAccessibleJob } from '@/lib/job-access';
 
 export async function GET(request: Request) {
   try {
-    const { db, workspace } = await requireContext(request, [
-      'owner',
-      'dispatcher',
-    ]);
+    const context = await requireContext(request);
+    const { db, workspace } = context;
     const id = new URL(request.url).searchParams.get('id')?.trim();
     if (!id)
       return json({ error: 'Attachment id is required.' }, { status: 400 });
     const attachment = await db
       .prepare(`SELECT a.object_key AS objectKey, a.file_name AS fileName,
-        a.content_type AS contentType FROM job_attachments a
+        a.content_type AS contentType, a.job_id AS jobId FROM job_attachments a
         JOIN jobs j ON j.id = a.job_id AND j.workspace_id = a.workspace_id
         WHERE a.id = ? AND a.workspace_id = ? LIMIT 1`)
       .bind(id, workspace.id)
-      .first<{ objectKey: string; fileName: string; contentType: string }>();
+      .first<{
+        objectKey: string;
+        fileName: string;
+        contentType: string;
+        jobId: string;
+      }>();
     if (!attachment)
       return json({ error: 'Attachment not found.' }, { status: 404 });
+    await requireAccessibleJob(context, attachment.jobId);
     const object = await getAttachmentBucket().get(attachment.objectKey);
     if (!object)
       return json(

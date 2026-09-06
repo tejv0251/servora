@@ -18,6 +18,7 @@ async function database() {
       'drizzle/0000_silent_chronomancer.sql',
       'drizzle/0001_flat_gladiator.sql',
       'drizzle/0002_messy_wrecking_crew.sql',
+      'drizzle/0003_smooth_leper_queen.sql',
     ]) {
       const sql = await readFile(
         new URL(`../${migration}`, import.meta.url),

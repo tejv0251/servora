@@ -324,6 +324,95 @@ export const jobAttachments = sqliteTable(
   ],
 );
 
+export const jobAssignments = sqliteTable(
+  'job_assignments',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    jobId: text('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    technicianUserId: text('technician_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    assignedBy: text('assigned_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    assignedAt: text('assigned_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex('idx_job_assignments_job').on(table.jobId),
+    index('idx_job_assignments_workspace_technician').on(
+      table.workspaceId,
+      table.technicianUserId,
+    ),
+  ],
+);
+
+export const jobNotes = sqliteTable(
+  'job_notes',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    jobId: text('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    authorId: text('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    body: text('body').notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index('idx_job_notes_workspace_job_created').on(
+      table.workspaceId,
+      table.jobId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const technicianOperations = sqliteTable(
+  'technician_operations',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    jobId: text('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    idempotencyKey: text('idempotency_key').notNull(),
+    kind: text('kind', { enum: ['status', 'note', 'attachment'] }).notNull(),
+    resultJson: text('result_json').notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex('idx_technician_operations_workspace_user_key').on(
+      table.workspaceId,
+      table.userId,
+      table.idempotencyKey,
+    ),
+    index('idx_technician_operations_job').on(table.jobId),
+  ],
+);
+
 export const activities = sqliteTable(
   'activities',
   {

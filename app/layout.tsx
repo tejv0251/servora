@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: 'Servora — Field Service Operations',
   description:
     'A multi-tenant service operations SaaS for quotes, jobs, technicians, invoices, and business performance.',
+  manifest: '/manifest.webmanifest',
+  icons: { icon: '/servora-app-icon.svg', apple: '/servora-app-icon.svg' },
+  applicationName: 'Servora',
 };
 
 export default function RootLayout({

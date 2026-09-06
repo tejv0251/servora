@@ -20,4 +20,6 @@ test('technicians cannot use unassigned operational mutations', () => {
   assert.equal(can('owner', 'operations.manage'), true);
   assert.equal(can('dispatcher', 'operations.manage'), true);
   assert.equal(can('technician', 'operations.manage'), false);
+  assert.equal(can('technician', 'field.manage_assigned'), true);
+  assert.equal(can('dispatcher', 'field.manage_assigned'), false);
 });

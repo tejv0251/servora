@@ -3,12 +3,14 @@ export type WorkspaceRole = 'owner' | 'dispatcher' | 'technician';
 export type WorkspaceCapability =
   | 'operations.read'
   | 'operations.manage'
+  | 'field.manage_assigned'
   | 'team.read'
   | 'team.manage';
 
 const CAPABILITIES: Record<WorkspaceCapability, readonly WorkspaceRole[]> = {
   'operations.read': ['owner', 'dispatcher', 'technician'],
   'operations.manage': ['owner', 'dispatcher'],
+  'field.manage_assigned': ['technician'],
   'team.read': ['owner', 'dispatcher'],
   'team.manage': ['owner'],
 };

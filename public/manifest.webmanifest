@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Servora Field Operations",
+  "short_name": "Servora",
+  "description": "Assigned field jobs, notes, status updates, and work-order photos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f4",
+  "theme_color": "#0b675f",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/servora-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
