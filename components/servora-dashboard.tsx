@@ -699,12 +699,12 @@ function Header({
         )}
       </search>
       <div className="topbar-actions">
-        <span
+        <output
           className="icon-button notification-button"
           aria-label="No new notifications"
         >
           <Bell />
-        </span>
+        </output>
         <div className="account-button">
           <span className="avatar avatar--dark">{initials}</span>
           <span>
@@ -788,7 +788,7 @@ function RevenueChart() {
           </span>
         </div>
       </div>
-      <div
+      <figure
         className="chart-wrap"
         aria-label="Weekly revenue versus target line chart"
       >
@@ -832,7 +832,7 @@ function RevenueChart() {
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </figure>
       <div className="chart-summary">
         <span>
           <small>Purpose</small>

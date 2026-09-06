@@ -10,7 +10,11 @@
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint app components/servora-dashboard.tsx components/servora-app.tsx components/technician-mobile.tsx components/job-assignment-dialog.tsx components/job-attachments-dialog.tsx lib db",
+    "typecheck": "tsc --noEmit",
     "test": "node --require ./scripts/windows-userinfo.cjs --import tsx --test tests/*.test.ts",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "check:secrets": "node scripts/scan-secrets.mjs",
     "format": "oxfmt",
     "db:generate": "node scripts/drizzle-kit.cjs generate"
   },

@@ -1,0 +1,31 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["app", "components"],
+  "locale": "en-US",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Date",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": {
+    "Select/Listbox": "native",
+    "Date": "native"
+  },
+  "requiredCommands": ["unit", "lint", "typecheck", "build"],
+  "commands": {
+    "unit": "npm test",
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck",
+    "build": "npm run build"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/payment-service.test.ts",
+    "failurePaths": "tests/permissions.test.ts",
+    "fileUploadPolicy": "tests/attachment-policy.test.ts",
+    "offlineReplay": "tests/technician-workflow.test.ts"
+  }
+}

@@ -25,3 +25,7 @@ export function getStripeConfiguration() {
       Boolean(webhookSecret?.startsWith('whsec_')),
   };
 }
+
+export function isDemoResetEnabled() {
+  return env.DEMO_RESET_ENABLED?.trim().toLowerCase() === 'true';
+}

@@ -1,0 +1,296 @@
+openapi: 3.1.0
+info:
+  title: Servora Operations API
+  version: 1.0.0
+  description: >-
+    Portfolio API contract for the deployed Servora vertical slice. Authentication
+    is supplied by the Sites edge; application routes enforce workspace membership
+    and role permissions server-side.
+servers:
+  - url: https://servora-operations-saas.tejvishwakarma.chatgpt.site
+tags:
+  - name: System
+  - name: Operations
+  - name: Billing
+  - name: Team
+  - name: Technician
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Check application and database readiness
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '503': { $ref: '#/components/responses/Error' }
+  /api/session:
+    get:
+      tags: [System]
+      summary: Read the authenticated user, workspace, and role
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/dashboard:
+    get:
+      tags: [Operations]
+      summary: Read tenant-scoped dashboard data and KPIs
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/customers:
+    post:
+      tags: [Operations]
+      summary: Create a customer
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/quotes:
+    post:
+      tags: [Operations]
+      summary: Create a quote for a workspace customer
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '400': { $ref: '#/components/responses/Error' }
+  /api/quotes/accept:
+    post:
+      tags: [Operations]
+      summary: Accept a quote and create its job
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/jobs:
+    post:
+      tags: [Operations]
+      summary: Create a scheduled job
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '400': { $ref: '#/components/responses/Error' }
+  /api/jobs/status:
+    post:
+      tags: [Operations]
+      summary: Advance a job through the controlled lifecycle
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/jobs/assignment:
+    post:
+      tags: [Operations]
+      summary: Assign a workspace technician to a job
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/jobs/attachments:
+    get:
+      tags: [Operations]
+      summary: List authorized attachments for a job
+      parameters:
+        - in: query
+          name: jobId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Operations]
+      summary: Upload a validated work-order attachment
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [jobId, file]
+              properties:
+                jobId: { type: string }
+                file: { type: string, format: binary }
+                idempotencyKey: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '413': { $ref: '#/components/responses/Error' }
+        '415': { $ref: '#/components/responses/Error' }
+  /api/jobs/attachments/download:
+    get:
+      tags: [Operations]
+      summary: Download an authorized R2 attachment
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Attachment bytes }
+        '404': { $ref: '#/components/responses/Error' }
+  /api/invoices:
+    post:
+      tags: [Billing]
+      summary: Issue an invoice for a completed job
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/invoices/pay:
+    post:
+      tags: [Billing]
+      summary: Compatibility endpoint for recording invoice payment
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /api/payments:
+    get:
+      tags: [Billing]
+      summary: List payments, optionally filtered by invoice
+      parameters:
+        - in: query
+          name: invoiceId
+          schema: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /api/payments/manual:
+    post:
+      tags: [Billing]
+      summary: Record an idempotent manual payment
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/payments/checkout:
+    post:
+      tags: [Billing]
+      summary: Create a Stripe test-mode Checkout session
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '503': { $ref: '#/components/responses/Error' }
+  /api/payments/webhook:
+    post:
+      tags: [Billing]
+      summary: Verify and process a Stripe test webhook
+      security: []
+      parameters:
+        - in: header
+          name: stripe-signature
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '400': { $ref: '#/components/responses/Error' }
+  /api/team:
+    get:
+      tags: [Team]
+      summary: List workspace members and pending invitations
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/team/invitations:
+    post:
+      tags: [Team]
+      summary: Create a seven-day team invitation
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '409': { $ref: '#/components/responses/Error' }
+  /api/team/invitations/revoke:
+    post:
+      tags: [Team]
+      summary: Revoke a pending invitation
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+  /api/team/members/role:
+    post:
+      tags: [Team]
+      summary: Change a non-owner member role
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/technician/dashboard:
+    get:
+      tags: [Technician]
+      summary: Read only jobs assigned to the authenticated technician
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/technician/jobs/status:
+    post:
+      tags: [Technician]
+      summary: Advance an assigned job with replay protection
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/technician/jobs/notes:
+    post:
+      tags: [Technician]
+      summary: Add a note to an assigned job with replay protection
+      requestBody: { $ref: '#/components/requestBodies/JsonObject' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/demo/reset:
+    post:
+      tags: [System]
+      summary: Reset the owner's current workspace to fictional seed data
+      description: Disabled unless DEMO_RESET_ENABLED=true and requires exact confirmation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, const: RESET SERVORA DEMO }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '404': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    sitesIdentity:
+      type: apiKey
+      in: header
+      name: oai-authenticated-user-id
+      description: Injected by the hosting edge; clients do not set it directly.
+  requestBodies:
+    JsonObject:
+      required: true
+      content:
+        application/json:
+          schema: { type: object, additionalProperties: true }
+  responses:
+    Success:
+      description: Successful JSON response
+      headers:
+        x-request-id:
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { type: object, additionalProperties: true }
+    Error:
+      description: Rejected request
+      headers:
+        x-request-id:
+          schema: { type: string }
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error: { type: string }
+security:
+  - sitesIdentity: []

@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 
-import { ServoraDashboard } from '@/components/servora-dashboard';
-import { TechnicianMobile } from '@/components/technician-mobile';
 import { Button } from '@/components/ui/button';
 import type { SessionData } from '@/lib/contracts';
+
+const ServoraDashboard = lazy(() =>
+  import('@/components/servora-dashboard').then((module) => ({
+    default: module.ServoraDashboard,
+  })),
+);
+const TechnicianMobile = lazy(() =>
+  import('@/components/technician-mobile').then((module) => ({
+    default: module.TechnicianMobile,
+  })),
+);
 
 export function ServoraApp() {
   const [session, setSession] = useState<SessionData | null>(null);
@@ -67,9 +76,13 @@ export function ServoraApp() {
     );
   if (!session)
     return <output className="app-loading">Opening Servora…</output>;
-  return session.role === 'technician' ? (
-    <TechnicianMobile session={session} />
-  ) : (
-    <ServoraDashboard />
+  return (
+    <Suspense fallback={<output className="app-loading">Opening workspace…</output>}>
+      {session.role === 'technician' ? (
+        <TechnicianMobile session={session} />
+      ) : (
+        <ServoraDashboard />
+      )}
+    </Suspense>
   );
 }

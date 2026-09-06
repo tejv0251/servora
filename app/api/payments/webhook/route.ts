@@ -1,5 +1,5 @@
 import { getD1, getStripeConfiguration } from '@/db';
-import { errorResponse, json } from '@/lib/api-response';
+import { errorResponse, json, readTextBody } from '@/lib/api-response';
 import {
   fulfillStripeCheckout,
   verifyStripeWebhook,
@@ -17,11 +17,11 @@ export async function POST(request: Request) {
     const signature = request.headers.get('stripe-signature');
     if (!signature)
       return json({ error: 'Stripe signature is required.' }, { status: 400 });
-    const payload = await request.text();
+    const payload = await readTextBody(request, 512 * 1024);
     const event = await verifyStripeWebhook(payload, signature, webhookSecret);
     const result = await fulfillStripeCheckout(getD1(), event);
     return json({ received: true, ...result });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, request);
   }
 }

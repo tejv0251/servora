@@ -240,7 +240,7 @@ select:focus-visible {
 
 .nav-item {
   display: flex;
-  min-height: 43px;
+  min-height: 44px;
   align-items: center;
   gap: 13px;
   border-radius: 8px;
@@ -386,8 +386,8 @@ select:focus-visible {
 .workspace-switcher small,
 .account-button small {
   margin-top: 2px;
-  color: #77807b;
-  font-size: 11px;
+  color: #68716d;
+  font-size: 12px;
 }
 
 .global-search {
@@ -420,8 +420,8 @@ select:focus-visible {
   border-radius: 5px;
   background: #f5f4f1;
   padding: 3px 6px;
-  color: #8a908c;
-  font-size: 10px;
+  color: #5f6964;
+  font-size: 12px;
 }
 
 .search-clear {
@@ -452,8 +452,8 @@ select:focus-visible {
 
 .icon-button {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 0;
   border-radius: 8px;
@@ -542,7 +542,7 @@ select:focus-visible {
 
 .page-heading p {
   margin-top: 7px;
-  color: #737b77;
+  color: #68716d;
   font-size: 14px;
 }
 
@@ -575,7 +575,7 @@ select:focus-visible {
 }
 
 .primary-button {
-  min-height: 42px;
+  min-height: 44px;
   background: #0b675f !important;
   color: #fff !important;
   padding-inline: 15px !important;
@@ -661,14 +661,14 @@ select:focus-visible {
 
 .metric-detail {
   margin-top: 9px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .metric-detail--positive {
   color: #188266;
 }
 .metric-detail--warning {
-  color: #b36b0c;
+  color: #925707;
 }
 .metric-detail--info {
   color: #68716d;
@@ -701,8 +701,8 @@ select:focus-visible {
 
 .panel-heading p {
   margin-top: 3px;
-  color: #78807c;
-  font-size: 11px;
+  color: #68716d;
+  font-size: 12px;
 }
 
 .text-action {
@@ -718,7 +718,7 @@ select:focus-visible {
   display: flex;
   gap: 13px;
   color: #636d68;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .chart-legend span {
@@ -742,6 +742,7 @@ select:focus-visible {
 
 .chart-wrap {
   height: 238px;
+  margin: 0;
 }
 
 .chart-summary {
@@ -760,8 +761,8 @@ select:focus-visible {
 }
 
 .chart-summary small {
-  color: #747c78;
-  font-size: 10px;
+  color: #626c67;
+  font-size: 12px;
 }
 
 .chart-summary strong {
@@ -794,7 +795,7 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 2px 3px 9px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .operation-lane > header span {
@@ -805,7 +806,7 @@ select:focus-visible {
   border-radius: 50%;
   background: #eff1ee;
   color: #5e6863;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .job-card {
@@ -834,13 +835,13 @@ select:focus-visible {
 
 .job-card small {
   color: #6d7671;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .job-card b {
   margin-top: 3px;
   color: #1f2b27;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
 }
 
@@ -871,7 +872,7 @@ select:focus-visible {
   border: 0;
   background: transparent;
   color: #0b675f;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .dashboard-lower-grid {
@@ -913,12 +914,12 @@ select:focus-visible {
 .person-name strong,
 .person-status,
 .person-load {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .person-name small {
-  color: #7c837f;
-  font-size: 9px;
+  color: #626c67;
+  font-size: 12px;
 }
 
 .person-status,
@@ -975,15 +976,15 @@ select:focus-visible {
   border-top: 0;
 }
 .attention-row strong {
-  font-size: 10px;
+  font-size: 12px;
 }
 .attention-row span:nth-child(3) {
   color: #5d6762;
-  font-size: 9px;
+  font-size: 12px;
 }
 .attention-row b {
   color: #0b675f;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -1022,15 +1023,15 @@ select:focus-visible {
   align-items: center;
   gap: 9px;
   border-top: 1px solid #efede8;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .activity-list li:first-child {
   border-top: 0;
 }
 .activity-list time {
-  color: #888f8b;
-  font-size: 9px;
+  color: #5f6964;
+  font-size: 12px;
 }
 
 .activity-glyph {

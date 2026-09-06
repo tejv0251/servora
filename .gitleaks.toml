@@ -1,0 +1,6 @@
+[allowlist]
+description = "Documented non-secret test and environment placeholders"
+regexes = [
+  '''sk_(?:test|live)_(?:replace_me|forbidden)''',
+  '''whsec_replace_me'''
+]

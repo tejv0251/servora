@@ -1,62 +1,122 @@
 # Servora Operations SaaS
 
-Servora is a portfolio-grade field-service operations product for HVAC, plumbing,
-electrical, and cleaning businesses. It gives owners and dispatchers one calm
-workspace for revenue, quotes, jobs, technicians, invoices, and operational risk.
+[![CI](https://github.com/tejv0251/servora/actions/workflows/ci.yml/badge.svg)](https://github.com/tejv0251/servora/actions/workflows/ci.yml)
+[![Security](https://github.com/tejv0251/servora/actions/workflows/security.yml/badge.svg)](https://github.com/tejv0251/servora/actions/workflows/security.yml)
 
-Private live preview: <https://servora-operations-saas.tejvishwakarma.chatgpt.site>
+Servora is a self-initiated, full-stack field-service operations product for HVAC,
+plumbing, electrical, and cleaning teams. It turns the customer-to-payment workflow
+into one role-aware workspace and demonstrates production-oriented React, API, data,
+security, offline, and deployment work.
 
-## Implemented vertical slice
+Live owner-only preview: <https://servora-operations-saas.tejvishwakarma.chatgpt.site>
 
-- Responsive operations dashboard based on an approved four-direction design study
-- Decision-ready KPIs and weekly revenue-versus-target reporting
-- Live job board with Scheduled, En route, In progress, and Completed states
-- Technician availability, attention queue, and recent activity
-- Navigable job, schedule, customer, quote, invoice, and technician data views
-- Durable customer, quote, job, and invoice records in Cloudflare D1
-- Authenticated user-to-workspace provisioning and server-side role checks
-- Owner-managed seven-day invitations, dispatcher read-only team access, role changes,
-  invitation revocation, and authenticated-email acceptance
-- Automated D1 isolation tests plus two-account HTTP verification for shared and
-  independent workspaces
-- Customer creation, quote creation and acceptance, job status transitions, invoice issue, and payment capture
-- Server-computed dashboard KPIs, attention queue, activity feed, and search feedback
-- Keyboard focus, semantic status labels, reduced-motion handling, and mobile navigation
-- Page tools for reading operations/team access, creating customers/jobs/invitations,
-  and advancing job status
+> The hosted preview currently requires authorized Sites access. All names, contact
+> details, jobs, and financial records shown by the application are fictional.
 
-## Stack
+## Product capabilities
 
-- React 19 and TypeScript
-- vinext / Vite for the Cloudflare-compatible application runtime
-- Tailwind CSS and shadcn/Base UI primitives
-- Recharts and Lucide icons
-- Cloudflare D1 with generated Drizzle migrations
-- Sites for private preview hosting
+- Decision-ready dashboard with KPIs, revenue progress, schedule, and activity
+- Persistent Customer → Quote → Job → Invoice → Payment workflow
+- Owner, dispatcher, and technician roles with server-side authorization
+- Seven-day invitations, role changes, revocation, and authenticated-email acceptance
+- Account-based technician assignment and assigned-job-only field access
+- Installable technician PWA with offline queueing and idempotent reconnect replay
+- Tenant-scoped Cloudflare R2 work-order attachments
+- Manual payment ledger and Stripe Checkout test-mode adapter
+- Signed, time-bounded, amount-checked, idempotent Stripe webhooks
+- Multi-workspace isolation and lifecycle regression tests
+- Structured error logging, request correlation, health check, and security headers
 
-The complete product, architecture, security, testing, and release plan lives one
-directory above this application in the portfolio project workspace.
+## Technology
 
-## Local development
+- React 19, TypeScript, vinext, Vite, and Tailwind CSS
+- Base UI/shadcn primitives, Recharts, and Lucide icons
+- Cloudflare D1 (SQLite) with Drizzle schema and generated migrations
+- Cloudflare R2 for attachments
+- Sites authentication and hosting
+- Node test runner, oxlint, TypeScript, GitHub Actions, npm audit, and Gitleaks
+
+## Architecture
+
+```mermaid
+flowchart LR
+  User --> Auth[Sites authentication]
+  Auth --> App[React + vinext]
+  App --> API[Server route handlers]
+  API --> RBAC[Workspace RBAC]
+  RBAC --> D1[(Cloudflare D1)]
+  API --> R2[(Cloudflare R2)]
+  API --> Stripe[Stripe test API]
+  CI[GitHub Actions] --> Checks[Lint + types + tests + build + scans]
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for trust boundaries, storage,
+offline behavior, and operational controls.
+
+## Local setup
+
+Requirements: Node.js 22.13 or newer and npm.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Quality checks:
+The local Cloudflare runtime creates project-local D1/R2 state. Hosted identity is
+not simulated automatically; integration tests use loopback-only test headers.
+
+Optional Stripe test configuration is documented in `.env.example`. Live-mode keys
+are rejected by the application.
+
+## Verification
 
 ```bash
-npm test
-npm run lint
-npx tsc --noEmit
-npm run build
+npm run check
+npm run check:secrets
+npm run audit:prod
 ```
 
-## Product workflow
+`npm run check` runs lint, TypeScript validation, the automated test suite, and a
+production build. GitHub repeats these gates for every push and pull request, while
+the weekly Security workflow checks production dependencies and full Git history for
+secrets.
 
-`Lead → Customer → Quote → Accepted → Job → Scheduled → Completed → Invoice → Paid`
+## API and operations
 
-The working slice is intentionally focused. Future milestones add fine-grained
-technician assignment, Stripe test-mode payments, file storage, observability,
-broader integration coverage, and final Upwork case-study assets.
+- `GET /api/health` provides a non-sensitive D1 readiness check.
+- Authenticated endpoints return `Cache-Control: no-store` and hardened response
+  headers.
+- Unexpected API failures emit structured JSON and return an `x-request-id` for
+  support correlation.
+- Deployment, rollback, backup, recovery, and incident guidance is in
+  [docs/OPERATIONS.md](docs/OPERATIONS.md).
+- The complete route inventory is published as
+  [docs/openapi.yaml](docs/openapi.yaml).
+- Test, browser, Lighthouse, and bundle evidence is summarized in
+  [docs/QUALITY.md](docs/QUALITY.md).
+
+## Security model
+
+Every business query is scoped to the selected authenticated workspace. Role checks
+are performed on the server; UI visibility is not treated as authorization. File
+downloads validate D1 metadata and workspace/job access before reading R2. Payment
+operations use replay protection and Stripe webhook verification.
+
+See [SECURITY.md](SECURITY.md) for reporting and repository-handling guidance.
+
+## Known limitations
+
+- The portfolio deployment remains owner-only until a dedicated public demo identity
+  and automated reset policy are approved.
+- Stripe is intentionally test-mode only.
+- Leads CRM, advanced quote line items, week-calendar conflict detection, refunds,
+  and platform-admin tooling are roadmap features, not claimed functionality.
+- D1/R2 backup schedules and edge abuse controls are configured outside this source
+  repository and must be enabled for a client production environment.
+
+## Authorship and license
+
+This is a self-initiated portfolio project designed and implemented to demonstrate
+end-to-end product delivery. It does not represent paid client work or fabricated
+business outcomes. Source code is available under the [MIT License](LICENSE); package
+and asset attribution is recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
