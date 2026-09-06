@@ -10,7 +10,7 @@ Evidence date: 2026-09-06
 | oxlint | Passed |
 | TypeScript `--noEmit` | Passed |
 | vinext production build | Passed |
-| Production dependency audit | 0 known vulnerabilities |
+| Production dependency audit | 0 high/critical vulnerabilities; one low-severity Windows development-server advisory inherited through Vite/esbuild |
 | Repository source secret scan | Passed |
 | Premium UI static audit | Passed in strict mode |
 
