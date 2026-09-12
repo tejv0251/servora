@@ -40,3 +40,8 @@ next-env.d.ts
 /.npm-cache/
 /.lighthouse-tmp*/
 *.tsbuildinfo
+
+# Local portfolio collateral and generated audit output
+/docs/portfolio/
+/portfolio-assets/
+/premium-audit.json
