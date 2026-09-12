@@ -13,6 +13,23 @@ Live owner-only preview: <https://servora-operations-saas.tejvishwakarma.chatgpt
 > The hosted preview currently requires authorized Sites access. All names, contact
 > details, jobs, and financial records shown by the application are fictional.
 
+## Portfolio walkthrough
+
+![Servora operations overview](docs/portfolio/01-servora-overview.png)
+
+| Quote workflow | Responsive jobs |
+|---|---|
+| ![Customer-linked quote creation](docs/portfolio/02-servora-quote-workflow.png) | ![Desktop and mobile owner Jobs view](docs/portfolio/03-servora-responsive-jobs.png) |
+
+![Architecture and dated release evidence](docs/portfolio/04-servora-engineering.png)
+
+These images use the working local application and fictional data. The mobile
+capture shows the responsive owner Jobs view. Engineering evidence is dated
+6 September 2026, release commit `69bb096`.
+
+[Portfolio description and captions](docs/portfolio/UPWORK-ENTRY.md) ·
+[90-second recording script](docs/portfolio/WALKTHROUGH-SCRIPT.md)
+
 ## Product capabilities
 
 - Decision-ready dashboard with KPIs, revenue progress, schedule, and activity
